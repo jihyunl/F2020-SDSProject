@@ -1,5 +1,7 @@
 # F2020-SDSProject
 
+[NOTE]link [https://utexas.box.com/s/r30o07304d6ca6sxgoum65xbc1lgd9xt]
+
 The structure of the final project (not of the prospectus) should be the following (5 pages max, including all relevant figures):
 
 •	Introduction: describe the data that you chose and the goals (scientific questions) that you want answer with your analysis
