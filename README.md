@@ -1,7 +1,5 @@
 # F2020-SDSProject
 
-Submit a single .pdf file: 1-page (max) project prospectus outlining the question, proposed methods, and data sources you hope to pursue for your project. The prospectus is ungraded, but it is an opportunity for you to get feedback on your idea and approach.  
- 
 The structure of the final project (not of the prospectus) should be the following (5 pages max, including all relevant figures):
 
 •	Introduction: describe the data that you chose and the goals (scientific questions) that you want answer with your analysis
@@ -10,7 +8,7 @@ The structure of the final project (not of the prospectus) should be the followi
 
 •	Results: show the results (include tables, graphs) that support your goal
  
-Grading rubric for the final project:
+## Grading rubric for the final project
 
 •	(5pt) clarity of the exposition (how clearly the analysis is explained)
 
