@@ -4,6 +4,7 @@
 
 * Check `Projects` tab to overview the progress.
 
+## Guideline
 
 The structure of the final project (not of the prospectus) should be the following (5 pages max, including all relevant figures):
 
