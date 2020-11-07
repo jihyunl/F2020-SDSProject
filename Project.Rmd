@@ -1,23 +1,25 @@
 ---
-title: "Final Project"
+title: "Modeling to Predict Wine Quality"
+subtitle: "Final Project"
 author: "YoungRi Lee & Jihyun Lee"
 date: "Last compiled on `r Sys.Date()`"
 output:
   bookdown::pdf_document2:
     fig_caption: yes
     includes:
-      in_header: ../addons/style.sty
+      in_header: addons/style.sty
     toc: no
     citation_package: biblatex
   pdf_document:
     toc: no
-bibliography: ../addons/reference.bib
+bibliography: addons/reference.bib
 ---
 
 ```{r message = F, warning = F, echo = F}
 library(dplyr)
 library(kableExtra)
 library(ggplot2)
+
 ```
 
 
@@ -27,8 +29,8 @@ library(ggplot2)
 
 ```{r, echo = F}
 # Read data
-red <- read.csv("../../F2020-SDSProject/Wine quality/winequality-red.csv", sep = ";")
-white <- read.csv("../../F2020-SDSProject/Wine quality/winequality-white.csv", sep = ";")
+red <- read.csv("Wine quality/winequality-red.csv", sep = ";")
+white <- read.csv("Wine quality/winequality-white.csv", sep = ";")
 
 # create wine type indicator (red = 1, white = 0: dummy variable)
 red <- red %>% mutate(red = 1)
