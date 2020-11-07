@@ -1,0 +1,139 @@
+---
+title: "Final Project"
+author: "YoungRi Lee & Jihyun Lee"
+date: "Last compiled on `r Sys.Date()`"
+output:
+  bookdown::pdf_document2:
+    fig_caption: yes
+    includes:
+      in_header: ../addons/style.sty
+    toc: no
+    citation_package: biblatex
+  pdf_document:
+    toc: no
+bibliography: ../addons/reference.bib
+---
+
+```{r message = F, warning = F, echo = F}
+library(dplyr)
+library(kableExtra)
+library(ggplot2)
+```
+
+
+# Introduction
+
+## Data
+
+```{r, echo = F}
+# Read data
+red <- read.csv("../../F2020-SDSProject/Wine quality/winequality-red.csv", sep = ";")
+white <- read.csv("../../F2020-SDSProject/Wine quality/winequality-white.csv", sep = ";")
+
+# create wine type indicator (red = 1, white = 0: dummy variable)
+red <- red %>% mutate(red = 1)
+white <- white %>% mutate(red = 0)
+
+# create a full dataset
+data <- rbind(red, white)
+
+# change to factor variable (dummy)
+data <- data %>% mutate(red = factor(as.character(red), labels = c("White", "Red"))) 
+#table(data$red)
+
+```
+
+This wine quality dataset is from [@Cortez2009].
+The dataset includes *vinho verde*, a unique product from the Minho (northwest) region of Portugal. The data were collected from May/2004 to February/2007 using only protected designation of origin samples that were tested at the official certification entity (CVRVV). The CVRVV is an inter-professional organization with the goal of improving the quality and marketing of vinho verde. The data were recorded by a computerized system (iLab), which automatically manages the process of wine sample testing from producer requests to laboratory and sensory analysis.
+
+The outcome variable is `wine quality`, which was measured by a minimum score of three sensory assessors using blind tastes in a scale that ranges from 0 (very bad) to 10 (excellent). 
+There are 11 attributes of the wine based on physicochemical tests: fixed acidity (g(tartaric acid)/$dm^3$), volatile acidity (g(acetic acid)/$dm^3$), citric acid (g/$dm^3$), residual sugar (g/$dm^3$), chlorides (g(sodium chloride)/$dm^3$), free sulfur dioxide (mg/$dm^3$), total sulfur dioxide (mg/$dm^3$), density (g/$dm^3$), pH, sulphates (g(potassium sulphate)/$dm^3$), and alcohol (vol.%).
+Originally, two datasets were created separately, one for red wine ($n = 1599$) and another for white wine ($n = 4988$). In this report, we use a merged dataset and create a dummy variable to indicate the wine type, `red`. 
+Thus, in total, the dataset includes 11 numerical attributes (covariates), one dummy variable, and one numerical outcome. 
+There is no missing value in this dataset.
+
+Table \@ref(tab:desc) shows the descriptive statistics of 11 attributes by wine type. [ADD SOME DESCRIPTION]
+
+```{r, echo=FALSE}
+data_cov <- data[,c(1:11,13)]
+
+options(dplyr.summarise.inform = FALSE)
+
+## Min
+Min <- data_cov %>% group_by(red) %>%
+  summarise(across(fixed.acidity:alcohol, ~ min(.x))) %>%
+   mutate_if(is.numeric, round, 3)
+Min <- as.data.frame(t(as.matrix(Min)))
+colnames(Min) <- c("Min", "Min")
+
+## Max
+Max <- data_cov %>% group_by(red) %>%
+  summarise(across(everything(), ~  max(.x)))%>%
+   mutate_if(is.numeric, round, 3)
+Max <- as.data.frame(t(as.matrix(Max)))
+colnames(Max) <- c("Max", "Max")
+
+## Mean
+Mean <- data_cov %>% group_by(red) %>%
+  summarise(across(everything(), ~  mean(.x)))%>%
+   mutate_if(is.numeric, round, 3)
+Mean <- as.data.frame(t(as.matrix(Mean)))
+colnames(Mean) <- c("Mean", "Mean")
+
+Descriptive <- cbind(Min, Max, Mean)
+White <- Descriptive[,c(1,3,5)]
+Red <- Descriptive[,c(2,4,6)] 
+
+Descriptive_f <- cbind(White, Red)[2:12,]
+rownames(Descriptive_f) <- c("Fixed acidity", "Volatile acidity", "Citric acid", "Residual sugar", "Chlorides", "Free sulfur dioxide", "Total sulfur dioxide", "Density", "pH", "Sulphates", "Alcohol")
+
+# Final table
+kbl(Descriptive_f, caption = "\\label{tab:desc} Descriptive statistics of 11 attributes", booktabs = T, escape = FALSE, format = "latex") %>% kable_styling(full_width = F) %>% 
+  add_header_above(c("", "White" = 3, "Red" = 3)) %>%
+  footnote(general = "The scale of each attribute is given in the text.")
+```
+
+
+Figure 1 shows the distribution of wine quality by wine type. Generally, it shows a normal shape distribution and centered around the middle point of the scale.
+Red wine has fewer observations than white wine. 
+
+```{r echo = F}
+## Need to reduce the size or add it as latex format.
+
+data %>% ggplot() + 
+  geom_histogram(aes(x = quality, fill = red), binwidth = 1, alpha = .7, position = "identity") +
+  theme_minimal() +
+  labs(title = "Figure 1. Histrogram of wine quality by wine type", x = "Quality", fill = "Wine") 
+```
+
+
+
+## Research Questions 
+
+Using this dataset, we would like to (1) build the best model to predict wine quality, (2) examine the most influential set of attributes to predict wine quality.
+
+To achieve this goal, we implemented two classes of techniques: shrinkage approaches (i.e., Ridge and Lasso regressions) and tree-based approaches (i.e., regression tree). 
+This report includes the comparisons of two approaches, model selection procedures (e.g., cross-validation), and proposal of the best model. 
+
+\textbf{[Possible Implications]}
+
+* Wine producers will use this information to produce the better quality of wine considering the selected attributes.
+
+* Wine consumers will be able to choose a good quality of wine without tasting (e.g., via online shopping) if the physicochemical information of wine is available.
+
+<!-- 1. What model best predicts the wine quality? -->
+<!-- 2. Which attributes are the most influential to predict wine quality? -->
+
+# Methods 
+
+## Shrinkage approaches
+
+## Tree-based approaches
+
+# Results
+
+# Discussion
+
+## Limitations 
+
+* Only uses the wine data from *vinho verde* region of Portugal. If a test dataset outside of this region is available, we would be able to test to generalize the results to a broader range of wine. 
