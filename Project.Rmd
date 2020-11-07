@@ -128,7 +128,13 @@ This report includes the comparisons of two approaches, model selection procedur
 
 # Methods 
 
+The shrinkage method uses all possible attributes while shrinking the coefficient of the attributes that do not associate with the outcome as strong as other attributes. The advantage of this method is that the method reduces the variance by reducing the relatively unimportant attributes. Also, important attributes in the model can be emphasized. However,  it leads to the bias of the model by reducing the variance. There are two types of shrinkage methods, ridge regression, and lasso regression. 
+
 ## Shrinkage approaches
+
+The purpose of ridge regression is to minimize the residual sum of squares of the model as well as the shrinkage penalty. 
+
+
 
 ## Tree-based approaches
 
