@@ -106,13 +106,16 @@ Figure 1 shows the distribution of wine quality by wine type.
 Generally, it shows a normal shape distribution and centered around the middle point of the scale.
 Red wine has fewer observations than white wine.
 
-```{r echo = F}
+```{r echo = F, fig.width=8, fig.height=3}
 ## Need to reduce the size or add it as latex format.
-
+## Here's color chart: http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/
 data %>% ggplot() + 
   geom_histogram(aes(x = quality, fill = red), binwidth = 1, alpha = .7, position = "identity") +
   theme_minimal() +
-  labs(title = "Figure 1. Histrogram of wine quality by wine type", x = "Quality", fill = "Wine") 
+  labs(title = "Figure 1. Histrogram of wine quality by wine type", 
+       x = "Quality", fill = "Wine") +
+  scale_x_continuous(breaks=seq(3, 9, 1)) +
+  scale_fill_manual(values=c("#669966", "#993366"))
 ```
 
 ## Research Questions
