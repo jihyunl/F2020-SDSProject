@@ -13,6 +13,9 @@ output:
   pdf_document:
     toc: no
 bibliography: addons/reference.bib
+editor_options: 
+  markdown: 
+    wrap: sentence
 ---
 
 ```{r message = F, warning = F, echo = F}
@@ -21,7 +24,6 @@ library(kableExtra)
 library(ggplot2)
 
 ```
-
 
 # Introduction
 
@@ -46,15 +48,20 @@ data <- data %>% mutate(red = factor(as.character(red), labels = c("White", "Red
 ```
 
 This wine quality dataset is from [@Cortez2009].
-The dataset includes *vinho verde*, a unique product from the Minho (northwest) region of Portugal. The data were collected from May/2004 to February/2007 using only protected designation of origin samples that were tested at the official certification entity (CVRVV). The CVRVV is an inter-professional organization with the goal of improving the quality and marketing of vinho verde. The data were recorded by a computerized system (iLab), which automatically manages the process of wine sample testing from producer requests to laboratory and sensory analysis.
+The dataset includes *vinho verde*, a unique product from the Minho (northwest) region of Portugal.
+The data were collected from May/2004 to February/2007 using only protected designation of origin samples that were tested at the official certification entity (CVRVV).
+The CVRVV is an inter-professional organization with the goal of improving the quality and marketing of vinho verde.
+The data were recorded by a computerized system (iLab), which automatically manages the process of wine sample testing from producer requests to laboratory and sensory analysis.
 
-The outcome variable is `wine quality`, which was measured by a minimum score of three sensory assessors using blind tastes in a scale that ranges from 0 (very bad) to 10 (excellent). 
+The outcome variable is `wine quality`, which was measured by a minimum score of three sensory assessors using blind tastes in a scale that ranges from 0 (very bad) to 10 (excellent).
 There are 11 attributes of the wine based on physicochemical tests: fixed acidity (g(tartaric acid)/$dm^3$), volatile acidity (g(acetic acid)/$dm^3$), citric acid (g/$dm^3$), residual sugar (g/$dm^3$), chlorides (g(sodium chloride)/$dm^3$), free sulfur dioxide (mg/$dm^3$), total sulfur dioxide (mg/$dm^3$), density (g/$dm^3$), pH, sulphates (g(potassium sulphate)/$dm^3$), and alcohol (vol.%).
-Originally, two datasets were created separately, one for red wine ($n = 1599$) and another for white wine ($n = 4988$). In this report, we use a merged dataset and create a dummy variable to indicate the wine type, `red`. 
-Thus, in total, the dataset includes 11 numerical attributes (covariates), one dummy variable, and one numerical outcome. 
+Originally, two datasets were created separately, one for red wine ($n = 1599$) and another for white wine ($n = 4988$).
+In this report, we use a merged dataset and create a dummy variable to indicate the wine type, `red`.
+Thus, in total, the dataset includes 11 numerical attributes (covariates), one dummy variable, and one numerical outcome.
 There is no missing value in this dataset.
 
-Table \@ref(tab:desc) shows the descriptive statistics of 11 attributes by wine type. [ADD SOME DESCRIPTION]
+Table \@ref(tab:desc) shows the descriptive statistics of 11 attributes by wine type.
+[ADD SOME DESCRIPTION]
 
 ```{r, echo=FALSE}
 data_cov <- data[,c(1:11,13)]
@@ -95,9 +102,9 @@ kbl(Descriptive_f, caption = "\\label{tab:desc} Descriptive statistics of 11 att
   footnote(general = "The scale of each attribute is given in the text.")
 ```
 
-
-Figure 1 shows the distribution of wine quality by wine type. Generally, it shows a normal shape distribution and centered around the middle point of the scale.
-Red wine has fewer observations than white wine. 
+Figure 1 shows the distribution of wine quality by wine type.
+Generally, it shows a normal shape distribution and centered around the middle point of the scale.
+Red wine has fewer observations than white wine.
 
 ```{r echo = F}
 ## Need to reduce the size or add it as latex format.
@@ -108,39 +115,48 @@ data %>% ggplot() +
   labs(title = "Figure 1. Histrogram of wine quality by wine type", x = "Quality", fill = "Wine") 
 ```
 
-
-
-## Research Questions 
+## Research Questions
 
 Using this dataset, we would like to (1) build the best model to predict wine quality, (2) examine the most influential set of attributes to predict wine quality.
 
-To achieve this goal, we implemented two classes of techniques: shrinkage approaches (i.e., Ridge and Lasso regressions) and tree-based approaches (i.e., regression tree). 
-This report includes the comparisons of two approaches, model selection procedures (e.g., cross-validation), and proposal of the best model. 
+To achieve this goal, we implemented two classes of techniques: shrinkage approaches (i.e., Ridge and Lasso regressions) and tree-based approaches (i.e., regression tree).
+This report includes the comparisons of two approaches, model selection procedures (e.g., cross-validation), and proposal of the best model.
 
 \textbf{[Possible Implications]}
 
-* Wine producers will use this information to produce the better quality of wine considering the selected attributes.
+-   Wine producers will use this information to produce the better quality of wine considering the selected attributes.
 
-* Wine consumers will be able to choose a good quality of wine without tasting (e.g., via online shopping) if the physicochemical information of wine is available.
+-   Wine consumers will be able to choose a good quality of wine without tasting (e.g., via online shopping) if the physicochemical information of wine is available.
 
 <!-- 1. What model best predicts the wine quality? -->
+
 <!-- 2. Which attributes are the most influential to predict wine quality? -->
 
 # Methods
 
 ## Shrinkage approaches
 
-The shrinkage method uses all possible covariates while shrinking the covariates' coefficient that does not associate with the outcome as strong as other predictors. The advantage of this method is to reduce the variance by reducing the relatively unimportant attributes. Also, important covariates in the model can be emphasized. However, it leads to the bias of the model by reducing the variance. There are two types of shrinkage methods, ridge regression, and lasso regression. 
+The shrinkage method uses all possible covariates while shrinking the covariates' coefficient that does not associate with the outcome as strong as other predictors.
+The advantage of this method is to reduce the variance by reducing the relatively unimportant attributes.
+Also, important covariates in the model can be emphasized.
+However, it leads to the bias of the model by reducing the variance.
+There are two types of shrinkage methods, ridge regression, and lasso regression.
 
 ### Ridge regression
 
-The purpose of ridge regression is to minimize the residual sum of squares of the model as well as the shrinkage penalty:
+The purpose of ridge regression is to minimize the residual sum of squares (RSS) of the model as well as the shrinkage penalty:
 
 $$
 RSS + \lambda\sum^p_{j=1}{\beta^2_j},
 $$
 
-where $RSS = \sum^n_{i=1}(y_i-\beta_0-\sum^p_{j=1}\beta_jx_{ij})^2$ and the second term indicates the shrinkage penalty. As the coefficients of the attributes become close to zero, the model fit of ridge regression will be desirable. The value of $\lambda$ controls the shrinkage penalty. As the value of  $\lambda$ increases, the more coefficients will be close to zero. In other words, the ridge regression uses all covariates in the data since the coefficient becomes not equal to zero. Generally, the value of $\lambda$ is selected using cross-validation to find the optimal value. However, ridge regression has a drawback in using all variables in the data and cannot select or subset the important variable. 
+where $RSS = \sum^n_{i=1}(y_i-\beta_0-\sum^p_{j=1}\beta_jx_{ij})^2$ and the second term indicates the shrinkage penalty.
+As the coefficients of the attributes become close to zero, the model fit of ridge regression will be desirable.
+The value of $\lambda$ controls the shrinkage penalty.
+As the value of $\lambda$ increases, the more coefficients will be close to zero.
+In other words, the ridge regression uses all covariates in the data since the coefficient becomes not equal to zero.
+Generally, the value of $\lambda$ is selected using cross-validation to find the optimal value.
+However, ridge regression has a drawback in using all variables in the data and cannot select or subset the important variable.
 
 ### Lasso regression
 
@@ -150,16 +166,34 @@ $$
 RSS + \lambda\sum^p_{j=1}{|\beta^2_j|}.
 $$
 
-The shrinkage penalty in the second term forces the coefficients to be equal to zero. By pushing the coefficient to be zero, lasso regression can identify the variables that substantially impact the outcome. When there are a small number of variables with strong effect, lasso regression has a benefit over Ridge regression by selecting only those variables. Thus, the model using lasso regression might be more parsimonious than that using ridge regression, making the model results more interpretable. Like ridge regression, the value of $\lambda$ will be determined by the cross-validation. 
-
-
+The shrinkage penalty in the second term forces the coefficients to be equal to zero.
+By pushing the coefficient to be zero, lasso regression can identify the variables that substantially impact the outcome.
+When there are a small number of variables with strong effect, lasso regression has a benefit over Ridge regression by selecting only those variables.
+Thus, the model using lasso regression might be more parsimonious than that using ridge regression, making the model results more interpretable.
+Like ridge regression, the value of $\lambda$ will be determined by the cross-validation.
 
 ## Tree-based approaches
+
+The tree-based approaches can be classified as regression trees and classification trees.
+We will focus on regression trees because the outcome variable is continuous in our data.
+Tree-based approaches segment the predictor space into several simple regions.
+In a tree, each rule that split the segment will be summarized, called decision-tree methods.
+After splitting the predictor space into a number of regions (a leaf node; $R_1, R_2, ... R_J$) using the selected predictors $X_j$, the average of the outcome within each region ($\hat{y}_{R_j}$) will be calculated.
+The model fit of the regression tree aims to minimize the RSS:
+
+$$
+\sum^J_{j=1}{\sum_{i \in R_j}{(y_i-\hat{y}_{R_j})^2}}
+$$
+
+Thus, the regression trees split the predictor space and create the two new branches only if the new split decreases RSS.
+Since the regression trees use this top-down approach to select the model, the final model might not be the true optimal model.
+However, the regression trees have the advantage of taking into account the nonlinearity or interaction of covariates.
+Also, the regression tree is useful in interpreting the results.
 
 # Results
 
 # Discussion
 
-## Limitations 
+## Limitations
 
-* Only uses the wine data from *vinho verde* region of Portugal. If a test dataset outside of this region is available, we would be able to test to generalize the results to a broader range of wine. 
+-   Only uses the wine data from *vinho verde* region of Portugal. If a test dataset outside of this region is available, we would be able to test to generalize the results to a broader range of wine.
