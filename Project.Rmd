@@ -22,7 +22,12 @@ editor_options:
 library(dplyr)
 library(kableExtra)
 library(ggplot2)
-
+library(glmnet)
+library(latex2exp)
+library(rpart)
+library(rpart.plot)
+library(plotrix)
+rm(list = ls())
 ```
 
 # Introduction
@@ -161,6 +166,8 @@ In other words, the ridge regression uses all covariates in the data since the c
 Generally, the value of $\lambda$ is selected using cross-validation to find the optimal value.
 However, ridge regression has a drawback in using all variables in the data and cannot select or subset the important variable.
 
+
+
 ### Lasso regression
 
 Lasso regression is similar to Ridge regression as it shrinks the coefficients toward zero but has a more stringent shrinkage penalty:
@@ -174,6 +181,7 @@ By pushing the coefficient to be zero, lasso regression can identify the variabl
 When there are a small number of variables with strong effect, lasso regression has a benefit over Ridge regression by selecting only those variables.
 Thus, the model using lasso regression might be more parsimonious than that using ridge regression, making the model results more interpretable.
 Like ridge regression, the value of $\lambda$ will be determined by the cross-validation.
+
 
 ## Tree-based approaches
 
@@ -193,7 +201,186 @@ Since the regression trees use this top-down approach to select the model, the f
 However, the regression trees have the advantage of taking into account the nonlinearity or interaction of covariates.
 Also, the regression tree is useful in interpreting the results.
 
+
 # Results
+
+## Ridge regression
+
+```{r, fig.width=6, fig.height=4}
+# data
+X <- model.matrix(quality ~ . -1, data = data)
+y <- data$quality
+p <- ncol(X)
+
+# fit ridge
+fit_ridge <- glmnet(X, y, alpha = 0)
+plot(fit_ridge, xvar = "lambda", label = TRUE, xlab = bquote('log('*lambda*')'), ylab = bquote(beta[j]), main = 'Ridge coefficients')
+lambda_grid <- fit_ridge$lambda # get lambda_grid for later
+
+# cv
+cv_ridge <- cv.glmnet(X, y, alpha = 0)
+plot(cv_ridge, xlab = TeX("$\\log (\\lambda)$"), ylab = 'CV Error')
+
+# hand-written cv
+# cv function
+cv_penalized_reg <- function(X, y, lambda_grid, K = floor(sqrt(nrow(X)))){
+ 
+  n <- nrow(X)
+  p <- ncol(X)
+  folds <- cut(sample(1:n), breaks = K, labels = FALSE)
+
+  train_err <- cv_err <- array(NA, dim = c(K, length(lambda_grid)))
+  
+  for(k in 1:K){
+    idx_tr <- which(folds != k)
+    idx_ts <- which(folds == k)
+    
+    fit_glm <- glmnet(X[idx_tr,], y[idx_tr], alpha = 0, lambda = lambda_grid)
+    
+    if (length(idx_ts) > 1){
+      cv_err[k,] <- as.numeric(colMeans((predict(fit_glm, X[idx_ts,], 
+                               lambda = lambda_grid) - y[idx_ts])^2))
+    }
+    else{
+      cv_err[k,] <- as.numeric(colMeans((predict(fit_glm, 
+                    matrix(X[idx_ts,],1,p), 
+                    lambda = lambda_grid) - y[idx_ts])^2))
+    }
+  }
+  cv_MSE <- colMeans(cv_err)
+  sd_cv_MSE <- apply(cv_err, 2, sd)/sqrt(K)
+  
+  return(list('cv_MSE' = cv_MSE, 'sd_cv_MSE' = sd_cv_MSE, 'cv_err' = cv_err))
+}
+
+# find the best model 
+fit_err <- cv_penalized_reg(X, y, lambda_grid, K = 10)
+
+# plot and see which one is the optimal & conservative one.
+plotCI(x = log(lambda_grid), y = fit_err$cv_MSE, uiw = fit_err$sd_cv_MSE, 
+       col = 'red', scol = 'gray', pch = 16, lwd = 2, 
+       xlab = TeX("$\\log (\\lambda)$"), ylab = 'Error')
+abline(v = log(lambda_grid)[which.min(fit_err$cv_MSE)], lwd = 1, col = 1, lty = 2)
+abline(h = min(fit_err$cv_MSE) + fit_err$sd_cv_MSE[which.min(fit_err$cv_MSE)], 
+       lwd = 1, lty = 2)
+idx <- which( min(fit_err$cv_MSE) + fit_err$sd_cv_MSE[which.min(fit_err$cv_MSE)] >= fit_err$cv_MSE)
+idx <- idx[1]
+abline(v = log(lambda_grid[idx]), lwd = 1, col = 1, lty = 3)
+legend('topleft', legend = 'Ridge CV Error', pch = 16, col = 'red')
+
+cv10_ridge <- fit_err$cv_err[,which.min(fit_err$cv_MSE)] # optimal
+compare <- data.frame(cv10_ridge) %>% mutate(model = "Ridge regression") %>% 
+  rename(value = cv10_ridge) %>% 
+  select(model, value)
+```
+
+## Lasso regression
+
+```{r, fig.width=6, fig.height=4}
+# fit lasso
+fit_lasso <- glmnet(X, y)
+plot(fit_lasso, xvar = "lambda", label = TRUE, 
+     xlab = bquote('log('*lambda*')'), ylab = bquote(beta[j]), 
+     main = 'Lasso coefficients')
+lambda_grid <- fit_lasso$lambda # get lambda_grid for later
+
+# cv
+cv_lasso <- cv.glmnet(X, y)
+plot(cv_lasso, xlab = TeX("$\\log (\\lambda)$"), ylab = 'CV Error')
+
+# hand-written cv
+# cv function
+cv_penalized_reg <- function(X, y, lambda_grid, K = floor(sqrt(nrow(X)))){
+ 
+  n <- nrow(X)
+  p <- ncol(X)
+  folds <- cut(sample(1:n), breaks = K, labels = FALSE)
+
+  train_err <- cv_err <- array(NA, dim = c(K, length(lambda_grid)))
+  
+  for(k in 1:K){
+    idx_tr <- which(folds != k)
+    idx_ts <- which(folds == k)
+    
+    fit_glm <- glmnet(X[idx_tr,], y[idx_tr], lambda = lambda_grid)
+    
+    if (length(idx_ts) > 1){
+      cv_err[k,] <- as.numeric(colMeans((predict(fit_glm, X[idx_ts,], 
+                               lambda = lambda_grid) - y[idx_ts])^2))
+    }
+    else{
+      cv_err[k,] <- as.numeric(colMeans((predict(fit_glm, 
+                    matrix(X[idx_ts,],1,p), 
+                    lambda = lambda_grid) - y[idx_ts])^2))
+    }
+  }
+  cv_MSE <- colMeans(cv_err)
+  sd_cv_MSE <- apply(cv_err, 2, sd)/sqrt(K)
+  
+  return(list('cv_MSE' = cv_MSE, 'sd_cv_MSE' = sd_cv_MSE, 'cv_err' = cv_err))
+}
+
+# find the best model 
+fit_err <- cv_penalized_reg(X, y, lambda_grid, K = 10)
+
+# plot and see which one is the optimal & conservative one.
+plotCI(x = log(lambda_grid), y = fit_err$cv_MSE, uiw = fit_err$sd_cv_MSE, 
+       col = 'red', scol = 'gray', pch = 16, lwd = 2, 
+       xlab = TeX("$\\log (\\lambda)$"), ylab = 'Error')
+abline(v = log(lambda_grid)[which.min(fit_err$cv_MSE)], lwd = 1, col = 1, lty = 2)
+abline(h = min(fit_err$cv_MSE) + fit_err$sd_cv_MSE[which.min(fit_err$cv_MSE)], 
+       lwd = 1, lty = 2)
+idx <- which( min(fit_err$cv_MSE) + fit_err$sd_cv_MSE[which.min(fit_err$cv_MSE)] >= fit_err$cv_MSE)
+idx <- idx[1]
+abline(v = log(lambda_grid[idx]), lwd = 1, col = 1, lty = 3)
+legend('topleft', legend = 'Lasso CV Error', pch = 16, col = 'red')
+
+cv10_lasso <- fit_err$cv_err[,which.min(fit_err$cv_MSE)] # optimal
+compare <- data.frame(cv10_lasso) %>% mutate(model = "Lasso regression") %>% 
+  rename(value = cv10_lasso) %>% 
+  select(model, value) %>% bind_rows(compare)
+
+# comparison 
+compare$model <- factor(compare$model , levels=c("Ridge regression", "Lasso regression"))
+ggplot(compare, aes(x = model, y = value, fill = model)) +
+  geom_boxplot(width = 0.5, alpha = 0.7) + 
+  labs(title="Test error by Ridge and Lasso regressions",
+       x ="Model", y = "Test Error") + 
+  scale_fill_manual(values=c("#E41A1C", "#377EB8")) + # "#4DAF4A", "#984EA3"
+  theme_minimal() +
+  theme(legend.title = element_blank())
+```
+
+## Tree-based approaches
+```{r, fig.width=6, fig.height=4}
+# Split the data in training and test
+n <- nrow(data)
+n_train <- floor(0.8 * n)
+n_test <- n - n_train
+
+set.seed(123)
+idx_test <- sample(1:n, n_test, replace = F)
+data_ts <- data[idx_test,]
+data <- data[-idx_test,]
+
+# fit tree
+best_tree <- rpart(quality ~ ., method = "anova", data = data)
+cat('Size of optimal tree:', length(unique(best_tree$where)), '\n')
+
+# Plot the cv error curve for the tree
+par(mar=c(4,4,4,2), family = 'serif')
+plotcp(best_tree)
+
+# Show the optimal tree
+rpart.plot(best_tree, clip.right.labs = FALSE, under = TRUE, digits = 4)
+
+# Prediction on the test set
+pred_y <- as.numeric(predict(best_tree, newdata = data_ts))
+err_all <- (pred_y - data_ts$quality)^2
+
+plot(data_ts$quality, pred_y, pch = 16, xlab = 'observed', ylab = 'predicted')
+abline(0, 1, lwd = 2, col = 'red') 
+```
 
 # Discussion
 
