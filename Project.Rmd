@@ -30,6 +30,10 @@ library(plotrix)
 rm(list = ls())
 ```
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
 # Introduction
 
 ## Data
@@ -206,17 +210,42 @@ Also, the regression tree is useful in interpreting the results.
 # data
 X <- model.matrix(quality ~ . -1, data = data)
 y <- data$quality
-p <- ncol(X)
+p <- ncol(X) ##### Why p = 13? 
 
 # fit ridge
-fit_ridge <- glmnet(X, y, alpha = 0) # This standardize variables by default
+fit_ridge <- glmnet(X, y, alpha = 0) # Standardize variables by default
+
+# plot
 plot(fit_ridge, xvar = "lambda", label = TRUE, xlab = bquote('log('*lambda*')'), ylab = bquote(beta[j]), main = 'Ridge coefficients')
-lambda_grid <- fit_ridge$lambda # get lambda_grid for later
+
+```
+
+
+$X_8$ is `density`. (Humm...)
+
+```{r, echo = F}
+hist(data$density)
+```
+
+
+
+```{r, echo = F}
+######## Cross-validation to choose tuning parameter
+
+# get lambda_grid for later
+lambda_grid <- fit_ridge$lambda 
 
 # cv
 cv_ridge <- cv.glmnet(X, y, alpha = 0)
-plot(cv_ridge, xlab = TeX("$\\log (\\lambda)$"), ylab = 'CV Error')
+plot(cv_ridge, xlab = TeX("$\\log (\\lambda)$"), ylab = 'CV Error', main = "Ridge CV error")
 
+
+ridge_lambda_min <- cv_ridge$lambda.min
+```
+
+The smallest cross-validation error minimizes with $\lambda =$ `r round(ridge_lambda_min,4)`.
+
+```{r}
 # hand-written cv
 # cv function
 cv_penalized_reg <- function(X, y, lambda_grid, K = floor(sqrt(nrow(X)))){
@@ -270,6 +299,7 @@ compare <- data.frame(cv10_ridge) %>% mutate(model = "Ridge regression") %>%
   select(model, value)
 ```
 
+
 ## Lasso regression
 
 ```{r, fig.width=6, fig.height=4, echo=FALSE}
@@ -278,6 +308,15 @@ fit_lasso <- glmnet(X, y)
 plot(fit_lasso, xvar = "lambda", label = TRUE, 
      xlab = bquote('log('*lambda*')'), ylab = bquote(beta[j]), 
      main = 'Lasso coefficients')
+
+```
+
+```{r}
+######## CV to choose tuning parameter ###########
+
+
+
+
 lambda_grid <- fit_lasso$lambda # get lambda_grid for later
 
 # cv
@@ -346,6 +385,7 @@ ggplot(compare, aes(x = model, y = value, fill = model)) +
   theme_minimal() +
   theme(legend.title = element_blank())
 ```
+
 
 ## Tree-based approaches
 ```{r, fig.width=6, fig.height=4, echo=FALSE}
