@@ -6,7 +6,13 @@
 
 ### Shrinkage approaches
 1. Ridge
+
+> Remove Ridge? (JL)
+
 2. Lasso
+
+> How to choose lambda? -> Use cross validation
+
 
 ### Regression tree
 * Variable importance measure
