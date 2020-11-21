@@ -13,6 +13,8 @@
 
 > How to choose lambda? -> Use cross validation
 
+> Do we need to use only training dataset?
+
 
 ### Regression tree
 
