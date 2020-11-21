@@ -130,11 +130,6 @@ Using this dataset, we would like to (1) build the best model to predict wine qu
 To achieve this goal, we implemented two classes of techniques: shrinkage approaches (i.e., Ridge and Lasso regressions) and tree-based approaches (i.e., regression tree).
 This report includes the comparisons of two approaches, model selection procedures (e.g., cross-validation), and proposal of the best model.
 
-\textbf{[Possible Implications]}
-
--   Wine producers will use this information to produce the better quality of wine considering the selected attributes.
-
--   Wine consumers will be able to choose a good quality of wine without tasting (e.g., via online shopping) if the physicochemical information of wine is available.
 
 <!-- 1. What model best predicts the wine quality? -->
 
@@ -142,51 +137,52 @@ This report includes the comparisons of two approaches, model selection procedur
 
 # Methods
 
+We implemented shrinkage approach (i.e., Ridge and Lasso regressions) and tree-based approach (i.e., Regression tree) to build a prediction model.
+
 ## Shrinkage approaches
 
-The shrinkage method uses all possible covariates while shrinking the covariates' coefficient that does not associate with the outcome as strong as other predictors.
-The advantage of this method is to reduce the variance by reducing the relatively unimportant attributes.
-Also, important covariates in the model can be emphasized.
-However, it leads to the bias of the model by reducing the variance.
-There are two types of shrinkage methods, ridge regression, and lasso regression.
+The shrinkage method uses all possible covariates while shrinking the covariates' coefficients towards zero that does not associate with the outcome as strong as other predictors.
+The advantage of this method is to reduce the variance by reducing the relatively unimportant attributes and selecting variables.
+Thus, important covariates in the model can be emphasized.
+However, it may lead to the bias of the model by reducing the variance (\textit{bias-variance trade-off}).
+Generally preferred shrinkage methods are \textit{ridge regression} and \textit{lasso}.
 
 ### Ridge regression
 
-The purpose of ridge regression is to minimize the residual sum of squares (RSS) of the model as well as the shrinkage penalty:
-
+The purpose of ridge regression is to reduce variance of the predictions by minimizing the residual sum of squares (RSS) of the model as well as the shrinkage penalty:
 $$
 RSS + \lambda\sum^p_{j=1}{\beta^2_j},
 $$
-
-where $RSS = \sum^n_{i=1}(y_i-\beta_0-\sum^p_{j=1}\beta_jx_{ij})^2$ and the second term indicates the shrinkage penalty.
+where $RSS = \sum^n_{i=1}(y_i-\beta_0-\sum^p_{j=1}\beta_jx_{ij})^2$ and the second term indicates the shrinkage penalty with a \textit{tuning parameter} $\lambda$.
 As the coefficients of the attributes become close to zero, the model fit of ridge regression will be desirable.
-The value of $\lambda$ controls the shrinkage penalty.
-As the value of $\lambda$ increases, the more coefficients will be close to zero.
-In other words, the ridge regression uses all covariates in the data since the coefficient becomes not equal to zero.
+The value of $\lambda$ controls the impact of shrinkage penalty.
+As the value of $\lambda$ increases, the impact of the shrinkage penalty grows and the ridge regression coefficients will be close to zero.
+<!-- In other words, the ridge regression uses all covariates in the data since the coefficient becomes not equal to zero. -->
 Generally, the value of $\lambda$ is selected using cross-validation to find the optimal value.
-However, ridge regression has a drawback in using all variables in the data and cannot select or subset the important variable.
+Ridge regression has a drawback in using all variables in the data and cannot select or subset the important variable, because the coefficients \textit{shrinks toward} zero, not become exact zero. This can lead a challenge in interpretation of the model with large set of variables. 
 
 
+### Lasso
 
-### Lasso regression
-
-Lasso regression is similar to Ridge regression as it shrinks the coefficients toward zero but has a more stringent shrinkage penalty:
+Lasso is similar to Ridge regression as it shrinks the coefficients toward zero but has a more stringent shrinkage penalty that can force the coefficients to be equal to zero:
 
 $$
 RSS + \lambda\sum^p_{j=1}{|\beta^2_j|}.
 $$
 
-The shrinkage penalty in the second term forces the coefficients to be equal to zero.
-By pushing the coefficient to be zero, lasso regression can identify the variables that substantially impact the outcome.
-When there are a small number of variables with strong effect, lasso regression has a benefit over Ridge regression by selecting only those variables.
-Thus, the model using lasso regression might be more parsimonious than that using ridge regression, making the model results more interpretable.
-Like ridge regression, the value of $\lambda$ will be determined by the cross-validation.
+By pushing the coefficient to be zero, lasso performs variable selection identifying the variables that substantially impact the outcome.
+<!-- When there are a small number of variables with strong effect, lasso regression has a benefit over Ridge regression by selecting only those variables. -->
+Thus, the model using lasso might be more parsimonious than that using ridge regression, making the model results more interpretable.
+Like ridge regression, the value of $\lambda$ in lasso is critical and will be determined by the cross-validation.
 
 
 ## Tree-based approaches
 
-The tree-based approaches can be classified as regression trees and classification trees.
-We will focus on regression trees because the outcome variable is continuous in our data.
+The tree-based approaches can be used for regression and classification.
+We will focus on regression trees because the outcome variable (\textit{wine quality}) is a numeric in our data.
+
+### Regression trees
+
 Tree-based approaches segment the predictor space into several simple regions.
 In a tree, each rule that split the segment will be summarized, called decision-tree methods.
 After splitting the predictor space into a number of regions (a leaf node; $R_1, R_2, ... R_J$) using the selected predictors $X_j$, the average of the outcome within each region ($\hat{y}_{R_j}$) will be calculated.
@@ -197,7 +193,7 @@ $$
 $$
 
 Thus, the regression trees split the predictor space and create the two new branches only if the new split decreases RSS.
-Since the regression trees use this top-down approach to select the model, the final model might not be the true optimal model.
+Since the regression trees use this top-down, greedy approach to select the model, the final model might not be the true optimal model.
 However, the regression trees have the advantage of taking into account the nonlinearity or interaction of covariates.
 Also, the regression tree is useful in interpreting the results.
 
@@ -206,14 +202,14 @@ Also, the regression tree is useful in interpreting the results.
 
 ## Ridge regression
 
-```{r, fig.width=6, fig.height=4}
+```{r, fig.width=6, fig.height=4, echo=FALSE}
 # data
 X <- model.matrix(quality ~ . -1, data = data)
 y <- data$quality
 p <- ncol(X)
 
 # fit ridge
-fit_ridge <- glmnet(X, y, alpha = 0)
+fit_ridge <- glmnet(X, y, alpha = 0) # This standardize variables by default
 plot(fit_ridge, xvar = "lambda", label = TRUE, xlab = bquote('log('*lambda*')'), ylab = bquote(beta[j]), main = 'Ridge coefficients')
 lambda_grid <- fit_ridge$lambda # get lambda_grid for later
 
@@ -276,7 +272,7 @@ compare <- data.frame(cv10_ridge) %>% mutate(model = "Ridge regression") %>%
 
 ## Lasso regression
 
-```{r, fig.width=6, fig.height=4}
+```{r, fig.width=6, fig.height=4, echo=FALSE}
 # fit lasso
 fit_lasso <- glmnet(X, y)
 plot(fit_lasso, xvar = "lambda", label = TRUE, 
@@ -352,7 +348,7 @@ ggplot(compare, aes(x = model, y = value, fill = model)) +
 ```
 
 ## Tree-based approaches
-```{r, fig.width=6, fig.height=4}
+```{r, fig.width=6, fig.height=4, echo=FALSE}
 # Split the data in training and test
 n <- nrow(data)
 n_train <- floor(0.8 * n)
@@ -387,3 +383,9 @@ abline(0, 1, lwd = 2, col = 'red')
 ## Limitations
 
 -   Only uses the wine data from *vinho verde* region of Portugal. If a test dataset outside of this region is available, we would be able to test to generalize the results to a broader range of wine.
+
+## Implications
+
+-   Wine producers will use this information to produce the better quality of wine considering the selected attributes.
+
+-   Wine consumers will be able to choose a good quality of wine without tasting (e.g., via online shopping) if the physicochemical information of wine is available.
