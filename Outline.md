@@ -5,11 +5,20 @@
 * Describe method
 
 ### Shrinkage approaches
-1. Ridge
+1. Ridge regression
+
+> Remove? (JL)
+
 2. Lasso
 
+> How to choose lambda? -> Use cross validation
+
+
 ### Regression tree
-* Variable importance measure
+
+1. Pruning a tree
+
+2. Variable importance measure
 
 
 ## Results
