@@ -30,3 +30,5 @@ Model fit
 Model fits (Cp, AIC, BIC, Adjusted R2)
 
 Cross Validation (K-fold or LOOCV)
+
+> Q: How can we compare LASSO vs. Tree model?
