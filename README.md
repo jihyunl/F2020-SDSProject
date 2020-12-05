@@ -9,7 +9,14 @@
 Submit one .pdf (or .html) file and one .R (or .Rmd) file: 5-pages max (including relevant figures to be included at a reasonable size) with the following structure: 
 
 * Introduction: describe the data that you chose and the goals (scientific questions) that you want answer with your analysis. If you use multiple data sources for your analysis, highlight this here. 
-Preprocessing and descriptives: show some descriptive statistics (this can be numeric summaries, boxplots/scatterplots, correlation plots, anything you think is relevant) that give a first hint to the relationships that the data has. In case you transform some variables or create new variables using the existing ones (feature engineering), highlight this here.
+
+- [ ] Describe the data
+- [ ] Research goals
+
+* Preprocessing and descriptives: show some descriptive statistics (this can be numeric summaries, boxplots/scatterplots, correlation plots, anything you think is relevant) that give a first hint to the relationships that the data has. In case you transform some variables or create new variables using the existing ones (feature engineering), highlight this here.
+
+- [ ] Descriptive statistics: Table and Histogram
+
 
 * Methods: describe what method you use to accomplish your goals and the motivation for choosing such method. Detail how you choose potential tuning parameters of the model. Hint: you can analyze your data using a single model (in this case the choice of your model should be carefully justified in light of your overarching goals), or compare the performance of two/three (max) different models on your data (in this case highlight pros and cons of each one of these models).
 
