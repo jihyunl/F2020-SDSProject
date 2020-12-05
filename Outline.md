@@ -4,12 +4,7 @@
 
 * Describe method
 
-### Shrinkage approaches
-1. Ridge regression
-
-> Remove? (JL)
-
-2. Lasso
+### Shrinkage approach - Lasso
 
 > How to choose lambda? -> Use cross validation
 
@@ -18,7 +13,10 @@
 
 ### Regression tree
 
+#### Single Tree
 1. Pruning a tree
+
+#### Ensemble of trees
 
 2. Variable importance measure
 
@@ -29,7 +27,7 @@ Model fit
 
 Model fits (Cp, AIC, BIC, Adjusted R2)
 
-Cross Validation (K-fold or LOOCV)
+Cross Validation (K-fold, k = 10)
 
 > Q: How can we compare LASSO vs. Tree model?
 
