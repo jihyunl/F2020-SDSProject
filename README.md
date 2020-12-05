@@ -20,6 +20,10 @@ Submit one .pdf (or .html) file and one .R (or .Rmd) file: 5-pages max (includin
 
 * Methods: describe what method you use to accomplish your goals and the motivation for choosing such method. Detail how you choose potential tuning parameters of the model. Hint: you can analyze your data using a single model (in this case the choice of your model should be carefully justified in light of your overarching goals), or compare the performance of two/three (max) different models on your data (in this case highlight pros and cons of each one of these models).
 
+- [ ] Describe methods
+- [ ] Motivation for choosing the methods
+- [ ] Justify your choice
+
 * Results: show the results (include tables, graphs) that support your initial goal.
  
 
