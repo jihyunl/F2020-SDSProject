@@ -1,8 +1,7 @@
 ---
 title: "Modeling to Predict Wine Quality"
-subtitle: "Final Project"
-author: "YoungRi Lee & Jihyun Lee"
-date: "Last compiled on `r Sys.Date()`"
+subtitle: "SDS 323 Final Project"
+author: "YoungRi Lee (yl29982) & Jihyun Lee (jl64875)"
 output:
   bookdown::pdf_document2:
     fig_caption: yes
@@ -41,10 +40,8 @@ knitr::opts_chunk$set(echo = FALSE)
 
 # Introduction
 
-## Data
-
 ```{r, echo = F}
-# Read data
+# read data
 red <- read.csv("Wine quality/winequality-red.csv", sep = ";")
 white <- read.csv("Wine quality/winequality-white.csv", sep = ";")
 
@@ -57,26 +54,13 @@ data <- rbind(red, white)
 
 # change to factor variable (dummy)
 data <- data %>% mutate(red = factor(as.character(red), labels = c("White", "Red"))) 
-#table(data$red)
-
-#summary(data$quality)
 ```
 
-This project will use a wine quality dataset from Cortez et al. (2009) [@Cortez2009]. The dataset only includes *vinho verde*, a unique product from the Minho (northwest) region of Portugal.
-The data were collected from May/2004 to February/2007 that were tested at the official certification entity (CVRVV). The CVRVV is an inter-professional organization with the goal of improving the quality and marketing of vinho verde region.
-The data were recorded by a computerized system (iLab), which automatically manages the process of wine sample testing from producer requests to laboratory and sensory analysis.
+We used a wine quality dataset from Cortez et al. (2009) [@Cortez2009]. The dataset only includes *vinho verde*, a unique product from the Minho (northwest) region of Portugal. 
+The outcome variable is `wine quality`, measured by a minimum score of three sensory assessors using blind tastes in a scale ranging from 0 (very bad) to 10 (excellent). 
+There are 11 attributes of the wine based on physicochemical tests (Table 1). Initially, two datasets of red wine ($n = 1599$) and white wine ($n = 4988$) were available. We merged the two and used for the analyses. We instead create an additional dummy variable to indicate the wine type, `red`. There is no missing value in this dataset.
 
-The outcome variable is `wine quality`, which was measured by a minimum score of three sensory assessors using blind tastes in a scale that ranges from 0 (very bad) to 10 (excellent). 
-There are 11 attributes of the wine based on physicochemical tests: fixed acidity (g(tartaric acid)/$dm^3$), volatile acidity (g(acetic acid)/$dm^3$), citric acid (g/$dm^3$), residual sugar (g/$dm^3$), chlorides (g(sodium chloride)/$dm^3$), free sulfur dioxide (mg/$dm^3$), total sulfur dioxide (mg/$dm^3$), density (g/$dm^3$), pH, sulphates (g(potassium sulphate)/$dm^3$), and alcohol (vol.%).
-Originally, two datasets were created separately, one for red wine ($n = 1599$) and another for white wine ($n = 4988$).
-In this report, we used a merged dataset and create a dummy variable to indicate the wine type, `red`.
-In total, the dataset includes 11 numerical attributes, one dummy variable (`red`), and one numerical outcome (`auality`).
-There is no missing value in this dataset.
-
-Table \@ref(tab:desc) shows the descriptive statistics (minimum, maximum, and mean values) of 11 attributes and wine quality by wine type.
 ```{r, echo=FALSE}
-#data_cov <- data[,c(1:11,13)]
-
 options(dplyr.summarise.inform = FALSE)
 
 ## Min
@@ -108,17 +92,26 @@ Descriptive_f <- cbind(White, Red)[2:13,]
 rownames(Descriptive_f) <- c("Fixed acidity", "Volatile acidity", "Citric acid", "Residual sugar", "Chlorides", "Free sulfur dioxide", "Total sulfur dioxide", "Density", "pH", "Sulphates", "Alcohol", "Wine Quality")
 
 # Final table
-kbl(Descriptive_f, caption = "\\label{tab:desc} Descriptive statistics of 11 attributes and outcome", booktabs = T, escape = FALSE, format = "latex", align = "lcccccc") %>% kable_styling(full_width = F) %>% 
-  add_header_above(c("", "White" = 3, "Red" = 3)) #%>%
-  #footnote(general = "The scale of each attribute is given in the text.")
+kbl(Descriptive_f, caption = "\\label{tab:desc} Descriptive statistics of 11 attributes and outcome",
+    booktabs = T, escape = FALSE, format = "latex", align = "lcccccc") %>% 
+  kable_styling(full_width = F, font_size = 7) %>% 
+  add_header_above(c("", "White" = 3, "Red" = 3))
 ```
-Figure 1 shows the distribution of wine quality by wine type.
-Generally, it shows a normal shape distribution and centered around the middle point of the scale.Red wine has fewer observations than white wine.
-
-```{r echo = F, out.width= "60%",  fig.cap='Histrogram of wine quality by wine type', fig.align="center"}
 
 
+```{r, include = F, out.width= "60%",  fig.cap='Histrogram of wine quality by wine type', fig.align="center"}
+# Here's color chart: http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/
+data %>% ggplot() + 
+  geom_histogram(aes(x = quality, fill = red), binwidth = 1, alpha = .7, position = "identity") +
+  theme_minimal() +
+  labs(x = "Quality", fill = "Wine") +
+  scale_x_continuous(breaks=seq(3, 9, 1)) +
+  scale_fill_manual(values=c("#669966", "#993366"))
+```
 
+Figure 1 shows the distribution of wine quality by wine type. Generally, it shows a normal shape distribution and centered around the middle point of the scale. Red wine has fewer observations than white wine.
+
+```{r echo = F, out.width= "50%",  fig.cap='Histrogram of wine quality by wine type', fig.align="center"}
 ## Here's color chart: http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/
 data %>% ggplot() + 
   geom_histogram(aes(x = quality, fill = red), binwidth = 1, alpha = .7, position = "identity") +
@@ -128,181 +121,30 @@ data %>% ggplot() +
   scale_fill_manual(values=c("#669966", "#993366"))
 ```
 
-## Research Questions
-
-We would like to (1) build the best model to predict wine quality, (2) examine the most influential set of attributes to predict wine quality.
-
-To achieve this goal, we implemented two classes of techniques: shrinkage approache (i.e., Lasso) and tree-based approaches (i.e., regression tree). 
-<!-- Choose only Lasso? -->
-This report includes the comparisons of two approaches, model selection procedures (e.g., cross-validation), and proposal of the best model.
-
+Our research goals are as follows: (1) build the best model to predict wine quality, (2) examine the most influential set of attributes to predict wine quality. We implemented three techniques: shrinkage approach (i.e., Lasso) and tree-based approaches (i.e., Random Forest and Boosting). Based on the comparison of the alternative methods, we proposed the best model for predicting wine quality and suggest the most influential variables on the prediction.
 
 # Methods
 
-## Shrinkage approach: Lasso
+## Shrinkage Method: Lasso
 
-The shrinkage approach uses all possible covariates while shrinking the covariates' coefficients towards zero that does not associate with the outcome as strong as other predictors.
-The advantage of this method is to reduce the variance by reducing the relatively unimportant attributes and selecting variables.
-Thus, important covariates in the model can be emphasized.
-However, it may lead to the bias of the model by reducing the variance (\textit{bias-variance trade-off}).
-
-The two well-known shrinkage methods are \textit{Ridge regression} and the \textit{Lasso}. 
-We choose Lasso over Ridge regression because Lasso forces the coefficients to be exactly equal to zero. 
-On the other hand, ridge regression shrinks the coefficients \textit{toward} zero, not makes exact zero. This is a drawback that ridge regression cannot select or subset the important variables and leads a challenge in interpretation of the model with large set of variables. 
-In addition, it is known that lasso outperform ridge when variables are highly correlated (collinearity).
-
-<!-- ### Ridge regression -->
-
-<!-- The purpose of ridge regression is to reduce variance of the predictions by minimizing the residual sum of squares (RSS) of the model as well as the shrinkage penalty: -->
-<!-- $$ -->
-<!-- RSS + \lambda\sum^p_{j=1}{\beta^2_j}, -->
-<!-- $$ -->
-<!-- where $RSS = \sum^n_{i=1}(y_i-\beta_0-\sum^p_{j=1}\beta_jx_{ij})^2$ and the second term indicates the shrinkage penalty with a \textit{tuning parameter} $\lambda$. -->
-<!-- As the coefficients of the attributes become close to zero, the model fit of ridge regression will be desirable. -->
-<!-- The value of $\lambda$ controls the impact of shrinkage penalty. -->
-<!-- As the value of $\lambda$ increases, the impact of the shrinkage penalty grows and the ridge regression coefficients will be close to zero. -->
-<!-- In other words, the ridge regression uses all covariates in the data since the coefficient becomes not equal to zero. -->
-<!-- Generally, the value of $\lambda$ is selected using cross-validation to find the optimal value. -->
-
-The \textit{lasso} shrinks the coefficients toward zero and has a more stringent shrinkage penalty that can force the coefficients to be equal to zero.
-The lasso coefficients, $\hat{\beta}^L$ minimize:
-
-$$
-RSS + \lambda\sum^p_{j=1}{|\beta_j|}.
-$$
-where minimizing the residual sum of squares (RSS) of the model as well as the shirinkage penalty $\lambda \sum^p_{j=1}{|\beta^2_j|}$. 
-$\lambda$ is a \textit{tuning parameter}, which controls the impact of shrinkage penalty. As the value of $\lambda$ increases, the impact of the shrinkage penalty grows and the lasso coefficients will be close to zero, and exactly to zero.
-By pushing the coefficient to be zero, lasso performs variable selection identifying the variables that substantially impact the outcome.
-Thus, the model using lasso might be more parsimonious than that using ridge regression, making the model results more interpretable.
-The value of $\lambda$ is generally determined by the cross-validation.
+The two well-known shrinkage methods are \textit{Ridge} and the \textit{Lasso regression}. 
+The benefit of these methods is to reduce the variance by reducing the relatively unimportant attributes and selecting variables. However, it may lead to the bias of the model by reducing the variance (\textit{bias-variance trade-off}). We choose Lasso over Ridge regression because Lasso forces the coefficients to be equal to zero, and it outperforms ridge when variables are highly correlated (collinearity).
+In Lasso, $\lambda$ is a \textit{tuning parameter}, which controls the impact of shrinkage penalty. We will select $\lambda$ by the cross-validation.
 
 
-## Tree-based approach: Regression tree
+## Tree-based Methods
 
-### Single Tree
-The tree-based approaches can be used for regression and classification.
-We will focus on regression trees because the outcome variable (\textit{wine quality}) is a numeric in our data.
+Tree-based methods can be used for regression and classification. This method segment the predictor space into several simple regions, and each rule that split the segment is summarized. We will use two of ensemble methods, **random forests** and **boosting**, instead of growing a single tree. The ensemble methods are more powerful and useful than a single tree to build prediction models. 
 
-Tree-based approaches segment the predictor space into several simple regions.
-In a tree, each rule that split the segment will be summarized, called \textit{decision-tree methods}.
-After splitting the predictor space into a number of regions (a leaf node; $R_1, R_2, ... R_J$) using the selected predictors $X_j$, the average of the outcome within each region ($\hat{y}_{R_j}$) will be calculated.
-The model fit of the regression tree aims to minimize the RSS:
+The random forests, is an improved version of bagged trees, which build a number of decision trees using bootstrapped training samples. Random forests are similar to bagging but use only a random subset of predictors. This process decorrelates the built trees in bagging and reduces the variance. In this study, we will use $m=\sqrt{p}=\sqrt{12}$ as the number of predictors considered at each split.
 
-$$
-\sum^J_{j=1}{\sum_{i \in R_j}{(y_i-\hat{y}_{R_j})^2}}
-$$
-
-Thus, the regression trees split the predictor space and create the two new branches only if the new split decreases RSS.
-Since the regression trees use this top-down, greedy approach to select the model, the final model might not be the true optimal model.
-However, the regression trees have the advantage of taking into account the nonlinearity or interaction of covariates.
-Also, the regression tree is useful in interpreting the results.
-
-### Ensemble Methods
-
-Instead of growing a single tree, ensemble methods is more powerful to build prediction models. We used random forests and boosting trees.
-<!-- Ensemble methods allow  -->
-
-#### Random Forests
-
-Typically, random forests method improves over bagged trees by decorrelating the trees and reducing the variance. Each tree uses a sample of predictors, not all. We will use $\sqrt{12}$ as the number of predictors considered at each split.
-
-#### Boosting
-
-Boosting is a slow learning approach, potentially overfitting by updating residuals. The trees are grown sequentially and the final boosted model is the sum of the fitted trees. 
-There are three parameters, shrinkage parameter ($\lambda$), number of iterations ($B$), and the size of each new tree ($d$, the number of splits).
-
-
-
-
-<!-- ## Ridge regression -->
-
-```{r, fig.width=6, fig.height=4, echo=FALSE, include = F}
-# data
-# X <- model.matrix(quality ~ . -1, data = data)
-# y <- data$quality
-# p <- ncol(X) ##### Why p = 13? 
-# 
-# # fit ridge
-# fit_ridge <- glmnet(X, y, alpha = 0) # Standardize variables by default
-# 
-# # plot
-# plot(fit_ridge, xvar = "lambda", label = TRUE, xlab = bquote('log('*lambda*')'), ylab = bquote(beta[j]), main = 'Ridge coefficients')
-```
-
-
-```{r, echo = F, fig.width=6, fig.height=4}
-######## Cross-validation to choose tuning parameter
-
-# get lambda_grid for later
-# lambda_grid <- fit_ridge$lambda 
-# 
-# # cv
-# cv_ridge <- cv.glmnet(X, y, alpha = 0)
-# plot(cv_ridge, xlab = TeX("$\\log (\\lambda)$"), ylab = 'CV Error', main = "Ridge CV error")
-# 
-# 
-# ridge_lambda_min <- cv_ridge$lambda.min
-```
-
-```{r}
-# hand-written cv
-# cv function
-# cv_penalized_reg <- function(X, y, lambda_grid, K = floor(sqrt(nrow(X)))){
-#  
-#   n <- nrow(X)
-#   p <- ncol(X)
-#   folds <- cut(sample(1:n), breaks = K, labels = FALSE)
-# 
-#   train_err <- cv_err <- array(NA, dim = c(K, length(lambda_grid)))
-#   
-#   for(k in 1:K){
-#     idx_tr <- which(folds != k)
-#     idx_ts <- which(folds == k)
-#     
-#     fit_glm <- glmnet(X[idx_tr,], y[idx_tr], alpha = 0, lambda = lambda_grid)
-#     
-#     if (length(idx_ts) > 1){
-#       cv_err[k,] <- as.numeric(colMeans((predict(fit_glm, X[idx_ts,], 
-#                                lambda = lambda_grid) - y[idx_ts])^2))
-#     }
-#     else{
-#       cv_err[k,] <- as.numeric(colMeans((predict(fit_glm, 
-#                     matrix(X[idx_ts,],1,p), 
-#                     lambda = lambda_grid) - y[idx_ts])^2))
-#     }
-#   }
-#   cv_MSE <- colMeans(cv_err)
-#   sd_cv_MSE <- apply(cv_err, 2, sd)/sqrt(K)
-#   
-#   return(list('cv_MSE' = cv_MSE, 'sd_cv_MSE' = sd_cv_MSE, 'cv_err' = cv_err))
-# }
-# 
-# # find the best model 
-# fit_err <- cv_penalized_reg(X, y, lambda_grid, K = 10)
-# 
-# # plot and see which one is the optimal & conservative one.
-# plotCI(x = log(lambda_grid), y = fit_err$cv_MSE, uiw = fit_err$sd_cv_MSE, 
-#        col = 'red', scol = 'gray', pch = 16, lwd = 2, 
-#        xlab = TeX("$\\log (\\lambda)$"), ylab = 'Error')
-# abline(v = log(lambda_grid)[which.min(fit_err$cv_MSE)], lwd = 1, col = 1, lty = 2)
-# abline(h = min(fit_err$cv_MSE) + fit_err$sd_cv_MSE[which.min(fit_err$cv_MSE)], 
-#        lwd = 1, lty = 2)
-# idx <- which( min(fit_err$cv_MSE) + fit_err$sd_cv_MSE[which.min(fit_err$cv_MSE)] >= fit_err$cv_MSE)
-# idx <- idx[1]
-# abline(v = log(lambda_grid[idx]), lwd = 1, col = 1, lty = 3)
-# legend('topleft', legend = 'Ridge CV Error', pch = 16, col = 'red')
-# 
-# cv10_ridge <- fit_err$cv_err[,which.min(fit_err$cv_MSE)] # optimal
-# compare <- data.frame(cv10_ridge) %>% mutate(model = "Ridge regression") %>% 
-#   rename(value = cv10_ridge) %>% 
-#   select(model, value)
-```
+In boosting, the trees are grown sequentially, and each tree is fitted on the residuals from the previous tree. The final model in boosting is determined by the sum of all fitted trees. Boosting is a slow learning approach, potentially overfitting by updating residuals. While fitting boosting, we will specify three parameters: shrinkage parameter ($\lambda$), number of iterations ($B$), and the size of each new tree ($d$, the number of splits).
 
 # Results
 
-## Lasso
+## Shrinkage Method: Lasso
 
-```{r, fig.width=6, fig.height=4, echo=FALSE}
+```{r, fig.width=5, fig.height=3, echo=FALSE}
 # data
 X <- model.matrix(quality ~ . -1, data = data)
 y <- data$quality
@@ -312,15 +154,14 @@ p <- ncol(X) # = 13?
 fit_lasso <- glmnet(X, y, alpha = 1)
 ```
 
-Figure 2(a) shows the lasso coefficients across the $log(\lambda)$. We notice that only one variable, `density`, shows rapid change as $log(\lambda)$ increases. Other covariates are very close to zero.
-
-We use 10-fold cross-validation to choose the tuning hyperparameter, $\lambda$ that minimizes the expected out-of-sample prediction error. Figure 2(b) shows CV error as $log(\lambda)$ changes. 
+Figure 2(a) shows the lasso coefficients across the $log(\lambda)$. Only one variable, `density`, shows rapid change as $log(\lambda)$ increases and other covariates are very close to zero. We use 10-fold cross-validation (CV) to choose the tuning hyperparameter, $\lambda$ that minimizes the expected out-of-sample prediction error. 
 
 ```{r}
 ######## CV to choose lambda ###########
 # CV
 set.seed(201204)
 cv_lasso <- cv.glmnet(X, y, alpha = 1)
+mse_lasso <- cv_lasso$cvm[which.min(cv_lasso$cvm)]
 ```
 
 ```{r, echo = F, fig.cap = 'Lasso results', out.width= "50%", fig.subcap=c('Lasso coefficients', 'CV error'), fig.pos="h"}
@@ -335,120 +176,29 @@ plot(cv_lasso, xlab = TeX("$\\log (\\lambda)$"), ylab = 'CV Error')
 
 ```{r}
 ##### Result interpretation
-
 # minimum lambda
 minlam <- cv_lasso$lambda.min
-
-# parsimonious model lambda
-parslam <- cv_lasso$lambda.1se
 ```
 
-Although the minimum CV error is a model with  $\hat{\lambda} =$ `r round(minlam, 3)` ($MSE = .539$), we choose the 1 standard error criterion which suggests the parsimonious model. Thus, our choice of the optimal model is with $\hat{\lambda} =$ `r round(parslam, 3)`. MSE with this $\hat{\lambda}$ is .550.
+Figure 2(b) shows CV error as $log(\lambda)$ changes. We chose the optimal model with the minimum CV error, $\hat{\lambda} =$ `r minlam` (Mean squared error; $MSE = .539$). The optimal model selects all twelve predictors in the model. 
 
-```{r}
+```{r, include=FALSE}
 # prediction
-lasso_coef <- predict(fit_lasso, s = parslam, type = "coefficients")[1:13,]
+lasso_coef <- predict(fit_lasso, s = minlam, type = "coefficients")[1:13,]
 
 lasso_coef <- as.data.frame(lasso_coef)
 Variables <- rownames(lasso_coef)
 lasso_coef <- lasso_coef %>% mutate(Variables = Variables)
 lasso_coef <- lasso_coef %>% mutate_if(is.numeric, round, 3) %>% select(Variables, lasso_coef)
   
-kbl(lasso_coef, caption = "Lasso coefficients for the optimal lambda", booktabs = T, format = "latex", col.names = c("Variables", "Coefficients")) %>% kable_styling(full_width = F)
-```
-
-Table 2 shows lasso coefficients for the chosen optimal $\hat{\lambda}$, `r round(parslam, 3)`. The coefficients of `fixed.acidity`, `citric.acid`, `density`, and `red` (wind type) were equal to zero. 
-Lasso selects a subset of variables: `volatile acidity`, `sugar`, `chlorides`, `sulfer dioxide`, `pH`, `sulphates`, and `alcohol`. `Volatile acidity` shows the largest magnitude of coefficients, $-1.236$.
-
-
-
-```{r}
-######### we may not need the below ##########
-
-
-# hand-written cv
-# cv function
-# cv_penalized_reg <- function(X, y, lambda_grid, K = floor(sqrt(nrow(X)))){
-# 
-#   n <- nrow(X)
-#   p <- ncol(X)
-#   folds <- cut(sample(1:n), breaks = K, labels = FALSE)
-# 
-#   train_err <- cv_err <- array(NA, dim = c(K, length(lambda_grid)))
-# 
-#   for(k in 1:K){
-#     idx_tr <- which(folds != k)
-#     idx_ts <- which(folds == k)
-# 
-#     fit_glm <- glmnet(X[idx_tr,], y[idx_tr], lambda = lambda_grid)
-# 
-#     if (length(idx_ts) > 1){
-#       cv_err[k,] <- as.numeric(colMeans((predict(fit_glm, X[idx_ts,],
-#                                lambda = lambda_grid) - y[idx_ts])^2))
-#     }
-#     else{
-#       cv_err[k,] <- as.numeric(colMeans((predict(fit_glm,
-#                     matrix(X[idx_ts,],1,p),
-#                     lambda = lambda_grid) - y[idx_ts])^2))
-#     }
-#   }
-#   cv_MSE <- colMeans(cv_err)
-#   sd_cv_MSE <- apply(cv_err, 2, sd)/sqrt(K)
-# 
-#   return(list('cv_MSE' = cv_MSE, 'sd_cv_MSE' = sd_cv_MSE, 'cv_err' = cv_err))
-# }
-# 
-# # find the best model
-# lambda_grid <- fit_lasso$lambda # get lambda_grid for later
-# 
-# set.seed(201204)
-# fit_err <- cv_penalized_reg(X, y, lambda_grid, K = 10)
-# 
-# # mean out-of-sample error
-# # plot and see which one is the optimal & conservative one
-# plotCI(x = log(lambda_grid), y = fit_err$cv_MSE, uiw = fit_err$sd_cv_MSE,
-#        col = 'red', scol = 'gray', pch = 16, lwd = 2,
-#        xlab = TeX("$\\log (\\lambda)$"), ylab = 'Error')
-# abline(v = log(lambda_grid)[which.min(fit_err$cv_MSE)], lwd = 1, col = 1, lty = 2)
-# abline(h = min(fit_err$cv_MSE) + fit_err$sd_cv_MSE[which.min(fit_err$cv_MSE)],
-#        lwd = 1, lty = 2)
-# idx <- which( min(fit_err$cv_MSE) + fit_err$sd_cv_MSE[which.min(fit_err$cv_MSE)] >= fit_err$cv_MSE)
-# idx <- idx[1]
-# abline(v = log(lambda_grid[idx]), lwd = 1, col = 1, lty = 3)
-# legend('topleft', legend = 'Lasso CV Error', pch = 16, col = 'red')
-# 
-# 
-# cv10_lasso <- fit_err$cv_err[,which.min(fit_err$cv_MSE)] # optimal
-# 
-# lambda_grid[idx]
-```
-
-```{r}
-######## COMPARE RIDGE vs. LASSO ############
-
-
-# 
-# compare <- data.frame(cv10_lasso) %>% mutate(model = "Lasso regression") %>%
-#   rename(value = cv10_lasso) %>%
-#   select(model, value) %>% bind_rows()
-# 
-# # comparison
-# compare$model <- factor(compare$model , levels=c("Ridge regression", "Lasso regression"))
-# ggplot(compare, aes(x = model, y = value, fill = model)) +
-#   geom_boxplot(width = 0.5, alpha = 0.7) +
-#   labs(title="Test error by Ridge and Lasso regressions",
-#        x ="Model", y = "Test Error") +
-#   scale_fill_manual(values=c("#E41A1C", "#377EB8")) + # "#4DAF4A", "#984EA3"
-#   theme_minimal() +
-#   theme(legend.title = element_blank())
+kbl(lasso_coef, caption = "Lasso coefficients for the optimal lambda", 
+    booktabs = T, format = "latex", 
+    col.names = c("Variables", "Coefficients")) %>% 
+  kable_styling(full_width = F, font_size = 8)
 ```
 
 
-## Regression Tree
-
-### Single Tree
-
-We use pruning to grow the best single tree and choose tuning parameter $\alpha$ using k-fold cross-validation ($k=10$).
+## Tree-based Method: Random forests
 
 ```{r, fig.width=6, fig.height=4, echo=FALSE}
 # Split the data in training and test
@@ -460,48 +210,11 @@ set.seed(123)
 idx_test <- sample(1:n, n_test, replace = F)
 data_tests <- data[idx_test,]
 data_train <- data[-idx_test,]
-
-# fit tree
-best_tree <- rpart(quality ~ ., method = "anova", data = data_train)
-
-bestsize <- length(unique(best_tree$where))
 ```
 
-```{r echo = F, fig.cap = 'Single tree', out.width= "50%", fig.pos="h", fig.subcap=c("")}
 
-# Plot the cv error curve for the tree
-#par(mar=c(4,4,4,2), family = 'serif')
-plotcp(best_tree)
-
-# Show the optimal tree
-rpart.plot(best_tree, clip.right.labs = FALSE, under = TRUE, digits = 4)
-```
-Figure 3(b) shows `alcohol` and `volatile.acidity` play key roles to determine the splits. 
-
-
-```{r fig.align="h", fig.cap="Single tree: prediction", out.width="60%", fig.align="center"}
-# Prediction on the test set
-pred_y <- as.numeric(predict(best_tree, newdata = data_tests))
-err_all <- (pred_y - data_tests$quality)^2
-
-# test set MSE
-test_mse <- mean(err_all)
-
-# plot
-plot(data_tests$quality, pred_y, pch = 16, xlab = 'observed', ylab = 'predicted')
-abline(0, 1, lwd = 2, col = 'red') 
-```
-
-Size of optimal tree is `r bestsize`.
-The test set MSE associated with this regression tree is `r round(test_mse, 3)`. Square root of this MSE is `r round(sqrt(test_mse), 3)`, indicating that this model leads to test predictions that are within around `r round(sqrt(test_mse), 3)` of the true wine quality.
-
-> [NOTE] This graph doesn't look pretty :( I guess it's because the outcome has very small range of distribution and pretty uniform. But this get better as we use ensemble methods later.
-
-### Ensemble Methods
-
-#### Random forest
-
-```{r echo = F, fig.cap = 'Random forest', out.width= "50%", fig.pos="h", fig.subcap=c("Out-of-bag Error", "Prediction")}
+```{r echo = F, fig.cap = 'Random forest', out.width= "50%", fig.pos="h", fig.subcap=c("Out-of-bag Error", "Prediction"), fig.align="center"}
+set.seed(1205)
 forest<- randomForest(quality~., data = data_train, importance=TRUE, mtry = sqrt(12))
 
 plot(forest)
@@ -509,37 +222,31 @@ plot(forest)
 ## Test set
 pred_y_forest <- predict(forest, newdata = data_tests)
 
-plot(data_tests$quality, pred_y_forest, pch = 16, xlab = 'observed', ylab = 'predicted')
+plot(data_tests$quality, pred_y_forest, pch = 16, xlab = 'observed', ylab = 'predicted', 
+     xlim = c(3.5, 8), ylim = c(3.5, 8))
 abline(0, 1, lwd = 2, col = 'red')
-```
 
-> [JL note] This graph looks much better than the previous one.
-
-```{r}
 err_forest <- (pred_y_forest - data_tests$quality)^2
 
 # MSE
 mse_forest <- mean(err_forest)
 ```
 
-```{r fig.cap="Random Forests: Variable Importance Plot", out.width="80%", fig.align="center"}
+Figure 2(a) illustrates test (out-of-bag; OOB) error estimation, which suggests OOB error stabilizes before 200 trees. Based on the prediction of random forest, we can see a decent fit of the model in Figure 2(b) with MSE of 0.356. 
+
+```{r fig.cap="Random Forests: Variable Importance Plot", out.width="60%", fig.align="center"}
 varImpPlot(forest)
 ```
 
+In the left panel of Figure 3, `%IncMSE` indicates the mean decrease of accuracy in prediction on the out of bag samples when a given variable is excluded from the model. The more considerable reduction indicates that the target variable is important in the model. `IncNodePurity` measures the total decrease in training RSS (the right panel of Figure 3). Based on the random forests, `Alcohol` seems to be the most important variables.
 
-`%IncMSE` indicates the mean decrease of accuracy in prediction on the out of bag samples when a given variable is excluded from the model. As the larger decrease, the target variable is important in the model.
-`IncNodePurity` measures the total decrease in training RSS.
-`Alcohol` seems to be the most important variables.
+## Tree-based Method: Boosting
 
-#### Boosting
-
-```{r}
+```{r, eval=FALSE}
 n <- nrow(data)
 
 set.seed(1205)
 boost <- gbm(quality~., data = data_train, distribution = "gaussian", n.trees = 2000, interaction.depth = 4)
-
-
 # summary(boost)
 
 # par(mfrow=c(1,2)) 
@@ -552,12 +259,7 @@ yhat.boost=predict(boost,newdata=data_tests, n.trees=2000)
 mse_boost <- mean((yhat.boost -data_tests$quality)^2)
 ```
 
-The test MSE is `r round(mse_boost, 3)`.
-
-We may choose an optimal lambda using cross-validation approach.
-
-```{r eval = F}
-
+```{r, eval = F}
 data_X <- data %>% mutate(red = as.numeric(red))
   
 data_X$quality <- NULL
@@ -608,10 +310,13 @@ save(hyper_grid, file = "boosting.rds")
 ```{r}
 load("boosting.rds")
 
-kbl(hyper_grid[order(hyper_grid$min_RMSE, decreasing = F),], format = "latex", caption = "Boosting results", digits = 3) %>% kable_styling(full_width = F)
+kbl(hyper_grid[order(hyper_grid$min_RMSE, decreasing = F),][1:5,], 
+    booktabs = T, format = "latex", 
+    caption = "Boosting results", digits = 3) %>% 
+  kable_styling(full_width = F, font_size = 7)
 ```
 
-Fitting final model based on minimum RMSE.
+
 
 ```{r}
 data_X <- data %>% mutate(red = as.numeric(red))
@@ -654,34 +359,30 @@ pred_y_boost <- predict(xgb.fit.final, data_test_xgb)
 # plot
 plot(data_tests$quality, pred_y_boost, pch = 16, xlab = 'observed', ylab = 'predicted')
 abline(0, 1, lwd = 2, col = 'red')
+
+# MSE
+err_boost <- (pred_y_boost - data_tests$quality)^2
+mse_boost <-mean(err_boost) # MSE
 ```
 
-`alcohol` and `volatile.acidity` are important variables in the boosting model. Similar choices as random forests.
+We chose an optimal lambda using the CV approach. Table 2 displays the models with the first five minimum RMSE, and the final model is determined based on minimum RMSE (0.602). 
+Figure 5(a) shows `alcohol` and `volatile.acidity` are important variables, which are similar to that of random forests. The MSE of boosting model is `r round(mse_boost, 3)` [Figure 5(b)].
 
+# Conclusion
 
 ```{r}
-err_boost <- (pred_y_boost - data_tests$quality)^2
-mse_boost<-mean(err_boost) # MSE
+data.frame(Lasso = mse_lasso,
+           RF = mse_forest,
+           Boosting = mse_boost) %>% 
+  kbl(col.names = c("Lasso", "Random Forest", "Boosting"),
+      booktabs = T, 
+      caption = "MSE Comparison", digits = 3) %>% 
+  kable_styling(full_width = FALSE, font_size = 8)
 ```
 
-The MSE of boosting model is `r round(mse_boost, 3)`.
-
-> [NOTE] Need to compare Random forest vs. Boosting
-
-The boosting yields smaller MSE compared to random forests. 
-
-
-# Discussion
-
-> [NOTE] Need to add general conclusion: comparing lasso vs. trees.
+In this project, we explored the best model to predict wine quality using real data. 
+We compared lasso regression, random forests, and boosting, examining a model with the best fit using cross-validation. 
+Overall, tree-based methods showed a better performance than lasso regression (Table 3). Among the tree-based methods, boosting showed a smaller MSE compared to random forests. We concluded that `alcohol` and `volatile.acidity` as the critical variables that influence the wine quality based on the boosting results. 
+Wine producers will be able to use this information to produce a better wine quality, considering the selected attributes. Also, wine consumers will be able to choose a good quality wine without tasting (e.g., via online shopping) if they have the physicochemical information about the wine.
 
 
-<!-- ## Limitations -->
-
-<!-- -   Only uses the wine data from *vinho verde* region of Portugal. If a test dataset outside of this region is available, we would be able to test to generalize the results to a broader range of wine. -->
-
-## Implications
-
--   Wine producers will use this information to produce the better quality of wine considering the selected attributes.
-
--   Wine consumers will be able to choose a good quality of wine without tasting (e.g., via online shopping) if the physicochemical information of wine is available.
