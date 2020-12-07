@@ -1,0 +1,78 @@
+---
+title: "Untitled"
+author: "JIhyun Lee"
+date: "12/5/2020"
+output: html_document
+---
+#### Bagging
+
+Bagging uses the bootstrap technique to reduce the variance by taking repeated training samples and average over.
+
+#### Bagging
+
+```{r}
+set.seed(201205)
+
+bag<- randomForest(quality~., data = data_train, mtry = 12, importance=TRUE)
+
+plot(bag, main = "Out-of-bag Error")
+```
+
+
+```{r}
+## Test set
+pred_y_bag <- predict(bag, newdata = data_tests)
+
+plot(data_tests$quality, pred_y, pch = 16, xlab = 'observed', ylab = 'predicted')
+abline(0, 1, lwd = 2, col = 'red')
+```
+
+```{r}
+err_bag <- (pred_y_bag - data_tests$quality)^2
+
+# MSE
+mean(err_bag)
+```
+
+
+```{r}
+# Importance
+# plot(importance(bag), xlab = 'variables', ylab = 'importance', 
+#      xaxt = 'n', type = 'h', lwd = 3)
+# axis(1, at = 1:length(importance(bag)), labels = rownames(importance(bag))) ## Not sure why axis is not working
+
+varImpPlot(bag)
+```
+
+
+
+`%IncMSE` indicates the mean decrease of accuracy in prediction on the out of bag samples when a given variable is excluded from the model. As the larger decrease, the target variable is important in the model.
+`IncNodePurity` measures the total decrease in training RSS.
+`Alcohol` and `Volatile acidity` seem to be important variables.
+
+
+Pruning alternatives:
+```{r message = F}
+library(tree)
+
+##### Pruning ?
+# fit 
+tree <- tree(quality~., data)
+summary(tree)
+
+
+## pruning the tree
+cv_tree <- cv.tree(tree)
+plot(cv_tree$size ,cv_tree$dev, type="b")
+
+## pruning
+prune_tree <- prune.tree(tree, best = 6)
+plot(prune_tree)
+text(prune_tree ,pretty=0)
+
+# Another package
+prune_tree2 <- prune.rpart(best_tree, cp = .01)
+
+rpart.plot(prune_tree2, clip.right.labs = FALSE, under = TRUE, digits = 4) # same as before.
+
+```
