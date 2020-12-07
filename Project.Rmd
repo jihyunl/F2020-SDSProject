@@ -1,7 +1,7 @@
 ---
 title: "Modeling to Predict Wine Quality"
 subtitle: "SDS 323 Final Project"
-author: "YoungRi Lee (yl29982) & Jihyun Lee (jl64875)"
+author: "Young Ri Lee (yl29982) & Jihyun Lee (jl64875)"
 output:
   bookdown::pdf_document2:
     fig_caption: yes
@@ -56,9 +56,9 @@ data <- rbind(red, white)
 data <- data %>% mutate(red = factor(as.character(red), labels = c("White", "Red"))) 
 ```
 
-We used a wine quality dataset from Cortez et al. (2009) [@Cortez2009]. The dataset only includes *vinho verde*, a unique product from the Minho (northwest) region of Portugal. 
+This project examined the best performing model to identify the most important variable to predict wine quality. We used a wine quality dataset from Cortez et al. (2009) [@Cortez2009]. The dataset only includes *vinho verde*, a unique product from the Minho region of Portugal. 
 The outcome variable is `wine quality`, measured by a minimum score of three sensory assessors using blind tastes in a scale ranging from 0 (very bad) to 10 (excellent). 
-There are 11 attributes of the wine based on physicochemical tests (Table 1). Initially, two datasets of red wine ($n = 1,599$) and white wine ($n = 4,988$) were available. We merged the two and used for the analyses by creating an additional dummy variable to indicate the wine type, `red`. There is no missing value in this dataset.
+There are 11 attributes of the wine based on physicochemical tests (Table 1). Initially, two datasets of red wine ($n = 1,599$) and white wine ($n = 4,988$) were available. We merged the two and used them for the analyses. We instead created an additional dummy variable to indicate the wine type, `red`. There was no missing value in this dataset.
 Figure 1 shows the distribution of wine quality by wine type. Generally, it shows a normal shape distribution and centered around the middle point of the scale. Red wine has fewer observations than white wine.
 
 ```{r, echo=FALSE}
@@ -134,9 +134,9 @@ In Lasso, $\lambda$ is a \textit{tuning parameter}, which controls the impact of
 
 ## Tree-based Methods
 
-Tree-based methods can be used for regression and classification. This method segments the predictor space into several simple regions, and each rule that split the segment is summarized. We  used two of ensemble methods, **random forests** and **boosting**, instead of growing a single tree. The ensemble methods are more powerful and useful than a single tree to build prediction models. 
+Tree-based methods can be used for regression and classification. This method segments the predictor space into several simple regions, and each rule that split the segment is summarized. We  used two of ensemble methods, *random forests* and *boosting*, instead of growing a single tree. The ensemble methods are more powerful and useful than a single tree to build prediction models. 
 
-The random forests, is an improved version of \textit{bagged} trees, which build a number of decision trees using bootstrapped training samples. Random forests are similar to bagging but use only a random subset of predictors. This process decorrelates the built trees in bagging and reduces the variance. In this study, we will use $m=\sqrt{p}=\sqrt{12}$ as the number of predictors considered at each split.
+The random forests, is an improved version of \textit{bagged} trees, which build a number of decision trees using bootstrapped training samples. Random forests are similar to bagging but use only a random subset of predictors. This process decorrelates the built trees in bagging and reduces the variance. In this study, we used $m=\sqrt{p}=\sqrt{12}$ as the number of predictors considered at each split.
 
 In boosting, the trees are grown sequentially, and each tree is fitted on the residuals from the previous tree. The final model in boosting is determined by the sum of all fitted trees. While fitting boosting, we specified three parameters: shrinkage parameter ($\lambda$), number of iterations ($B$), and the size of each new tree ($d$, the number of splits).
 
@@ -177,15 +177,16 @@ plot(cv_lasso, xlab = TeX("$\\log (\\lambda)$"), ylab = 'CV Error')
 ##### Result interpretation
 # minimum lambda
 minlam <- cv_lasso$lambda.min
+se_lam <- cv_lasso$lambda.1se
 ```
 
-Figure 2(a) shows the lasso coefficients across the $log(\lambda)$. Only one variable, `density`, shows rapid change as $log(\lambda)$ increases and other covariates are close to zero. We use 10-fold cross-validation (CV) to choose the tuning hyperparameter, $\lambda$ that minimizes the expected out-of-sample prediction error. 
-Figure 2(b) shows CV error as $log(\lambda)$ changes. We chose the optimal model with the minimum CV error, $\hat{\lambda} =$ `r minlam` (Mean squared error; $MSE = .539$). The optimal model selects all twelve predictors in the model. 
+Figure 2(a) shows the lasso coefficients across the $log(\lambda)$. Only one variable, `density`, shows rapid change as $log(\lambda)$ increases and other covariates are close to zero. We used 10-fold cross-validation (CV) to choose the tuning hyperparameter, $\lambda$ that minimizes the expected out-of-sample prediction error. 
+Figure 2(b) shows CV error as $log(\lambda)$ changes. We chose the parsimonious model ($\hat{\lambda} =$ `r round(se_lam, 3)`; Mean squared error (MSE) = .550) which has a mean CV error within 1 standard deviation criterion from the mean CV error of the optimal model. The parsimonious model selected nine predictors and `subphates` and `alcohol` explained the outcome variable the most. 
 
 
 ```{r, include=FALSE}
 # prediction
-lasso_coef <- predict(fit_lasso, s = minlam, type = "coefficients")[1:13,]
+lasso_coef <- predict(fit_lasso, s = se_lam, type = "coefficients")[1:13,]
 
 lasso_coef <- as.data.frame(lasso_coef)
 Variables <- rownames(lasso_coef)
@@ -233,7 +234,7 @@ err_forest <- (pred_y_forest - data_tests$quality)^2
 mse_forest <- mean(err_forest)
 ```
 
-Figure 3(a) illustrates test (out-of-bag; OOB) error estimation, which suggests OOB error stabilizes before 200 trees. Based on the prediction of random forest, we can see a decent fit of the model in Figure 3(b) with MSE of `r round(mse_forest,3)`. 
+Figure 3(a) illustrates test (out-of-bag; OOB) error estimation, which suggests OOB error stabilizes before 200 trees. The prediction of random forest shows a decent fit in Figure 3(b) with MSE of `r round(mse_forest,3)`. 
 
 ```{r fig.cap="Random Forests: Variable Importance Plot", out.width="60%", fig.align="center"}
 varImpPlot(forest)
@@ -381,7 +382,7 @@ data.frame(Lasso = mse_lasso,
   kable_styling(full_width = FALSE, font_size = 8)
 ```
 
-In this project, we explored the best model to predict wine quality using a real data. 
+We explored the best model to predict wine quality using a real data. 
 We compared lasso, random forests, and boosting, examining each model with the best fit using cross-validation. 
 Overall, tree-based methods showed a better performance than lasso regression (Table 3). Among the tree-based methods, boosting showed a smaller MSE compared to random forests. We concluded that `alcohol` and `volatile.acidity` as the critical variables that influence the wine quality based on the random forests and boosting results. 
 Wine producers will be able to use this information to produce a better wine quality, considering the selected attributes. Also, wine consumers will be able to choose a good quality wine without tasting (e.g., via online shopping) if they are provided the physicochemical information about the wine.
