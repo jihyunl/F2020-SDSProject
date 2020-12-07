@@ -181,7 +181,7 @@ se_lam <- cv_lasso$lambda.1se
 ```
 
 Figure 2(a) shows the lasso coefficients across the $log(\lambda)$. Only one variable, `density`, shows rapid change as $log(\lambda)$ increases and other covariates are close to zero. We used 10-fold cross-validation (CV) to choose the tuning hyperparameter, $\lambda$ that minimizes the expected out-of-sample prediction error. 
-Figure 2(b) shows CV error as $log(\lambda)$ changes. We chose the parsimonious model ($\hat{\lambda} =$ `r round(se_lam, 3)`; Mean squared error (MSE) = .550) which has a mean CV error within 1 standard deviation criterion from the mean CV error of the optimal model. The parsimonious model selected nine predictors and `subphates` and `alcohol` explained the outcome variable the most. 
+Figure 2(b) shows CV error as $log(\lambda)$ changes. We chose the parsimonious model ($\hat{\lambda} =$ `r round(se_lam, 3)`; Mean squared error (MSE) = .550) which has a mean CV error within 1 standard deviation criterion from the mean CV error of the optimal model. The parsimonious model excluded four predictors by shrinking the coefficients to zero (`fixed.acidity`, `citric.acid`, `density`, `red`(wine type)) and `volatile.acidity` (negatively), `sulphates` and `alcohol` showed the largest magnitude in lasso coefficients.
 
 
 ```{r, include=FALSE}
@@ -384,7 +384,7 @@ data.frame(Lasso = mse_lasso,
 
 We explored the best model to predict wine quality using a real data. 
 We compared lasso, random forests, and boosting, examining each model with the best fit using cross-validation. 
-Overall, tree-based methods showed a better performance than lasso regression (Table 3). Among the tree-based methods, boosting showed a smaller MSE compared to random forests. We concluded that `alcohol` and `volatile.acidity` as the critical variables that influence the wine quality based on the random forests and boosting results. 
+Overall, tree-based methods showed a better performance than lasso (Table 3). Among the tree-based methods, boosting showed a smaller MSE compared to random forests. We concluded that `alcohol` and `volatile.acidity` as the critical variables that influence the wine quality based on the random forests and boosting results. Note that lasso also did not exclude these variables.
 Wine producers will be able to use this information to produce a better wine quality, considering the selected attributes. Also, wine consumers will be able to choose a good quality wine without tasting (e.g., via online shopping) if they are provided the physicochemical information about the wine.
 
 
